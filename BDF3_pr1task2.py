@@ -6,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as mpl
 import scipy.linalg as SL
 from assimulo.solvers import CVode
+from BDF2_wuRNl45 import BDF_2 as bdf2
+
+import assimulo.problem as apr
 
 class BDF_3(Explicit_ODE):
     """
@@ -13,13 +16,13 @@ class BDF_3(Explicit_ODE):
     """
     tol=1.e-8     
     maxit=100     
-    maxsteps=500
+    maxsteps=100000
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Solver options
-        self.options["h"] = 0.01
+        self.options["h"] = 0.001
         
         #Statistics
         self.statistics["nsteps"] = 0
@@ -41,36 +44,35 @@ class BDF_3(Explicit_ODE):
         h = min(h, abs(tf-t))
         
         #Lists for storing the result
-        tres = []
-        yres = []
+        tres = [t]
+        yres = [y]
+        k = 3
         
         for i in range(self.maxsteps):
             if t >= tf:
                 break
             self.statistics["nsteps"] += 1
             
-            if i==0:  # initial step
-                t_np1,y_np1 = self.step_EE(t,y, h)
-                t,t_nm1=t_np1,t
-                y,y_nm1=y_np1,y
-                continue
-            elif i==1:
-                t,t_nm1=t_np1,t
-                y,y_nm1=y_np1,y
-                t_np1,y_np1 = self.step_EE(t,y, h)
-            else:   
-                t_np1, y_np1 = self.step_BDF3([t,t_nm1,t_nm2], [y,y_nm1,y_nm2], h)
-            t,t_nm1,t_nm2=t_np1,t,t_nm1
-            y,y_nm1,y_nm2=y_np1,y,y_nm1
+            # winding up
+            if i <= k-1:
+              t_np1,y_np1 = self.step_EE(tres[-1],yres[-1], h)
+            # continue computing
+            elif i <= k:
+              t_np1,y_np1 = bdf2.step_BDF2(self,tres[-1:-k:-1],yres[-1:-k:-1], h)
+            else:  
+              t_np1, y_np1 = self.step_BDF3(tres[-1:-(k+1):-1], yres[-1:-(k+1):-1], h)
             
-            tres.append(t)
-            yres.append(y.copy())
+            tres.append(t_np1)
+            yres.append(y_np1)
+            
+            t = t_np1
         
             h=min(self.h,np.abs(tf-t))
         else:
             raise Explicit_ODE_Exception('Final time not reached within maximum number of steps')
         
         return ID_PY_OK, tres, yres
+    
     
     def step_EE(self, t, y, h):
         """
@@ -88,7 +90,7 @@ class BDF_3(Explicit_ODE):
         alpha_0*y_np1+alpha_1*y_n+alpha_2*y_nm1+(alpha_3*y_nm2)=h f(t_np1,y_np1)
         alpha=[3/2,-2,1/2]
         """
-        alpha=[3., 3. , 1. , 1.]
+        alpha=[11., -18. , 9. , -2.]
         f=self.problem.rhs
         
         t_n,t_nm1,t_nm2=T
@@ -100,7 +102,7 @@ class BDF_3(Explicit_ODE):
         for i in range(self.maxit):
             self.statistics["nfcns"] += 1
             
-            y_np1_ip1=(-(alpha[1]*y_n+alpha[2]*y_nm1+alpha[3]*y_nm2)+h*f(t_np1,y_np1_i))/alpha[0]
+            y_np1_ip1=(-(alpha[1]*y_n+alpha[2]*y_nm1+alpha[3]*y_nm2)+h*6*f(t_np1,y_np1_i))/alpha[0]
             if SL.norm(y_np1_ip1-y_np1_i) < self.tol:
                 return t_np1,y_np1_ip1
             y_np1_i=y_np1_ip1
@@ -116,27 +118,31 @@ class BDF_3(Explicit_ODE):
         self.log_message('\nSolver options:\n',                                    verbose)
         self.log_message(' Solver            : BDF3',                     verbose)
         self.log_message(' Solver type       : Fixed step\n',                      verbose)
-            
-# #Define the rhs
-# def f(t,y):
-#     ydot = -y[0]
-#     return np.array([ydot])
-    
-# #Define an Assimulo problem
-# exp_mod = Explicit_Problem(f, 4)
-# exp_mod.name = 'Simple BDF-2 Example'
 
-# #Define another Assimulo problem
-# def pend(t,y):
-#     #g=9.81    l=0.7134354980239037
-#     gl=13.7503671
-#     return np.array([y[1],-gl*np.sin(y[0])])
-    
-# pend_mod=Explicit_Problem(pend, y0=np.array([2.*np.pi,1.]))
-# pend_mod.name='Nonlinear Pendulum'
+# # Construct RHS
+# def lambda_func(var1, var2, k):
+#   taljare = sqrt(var1**2+var2**2) -1
+#   namnare = sqrt(var1**2+var2**2)
+  
+#   l_func = k * taljare/namnare
+#   return l_func
 
-# #Define an explicit solver
-# exp_sim = BDF_3(pend_mod) #Create a BDF solver
-# t, y = exp_sim.simulate(4)
-# exp_sim.plot()
-# mpl.show()
+# def pend_rhs(t,x):
+#   k = 10**5
+#   a1 = x[0] #blue
+#   a2 = x[1] #orange
+#   a3 = x[2] #green
+#   a4 = x[3] #red
+#   return np.array([a3, a4, -a1*lambda_func(a1,a2,k), -a2*lambda_func(a1,a2,k) - 1])
+
+
+# # Settup of explicit problem
+# # and initial values (are these any good)
+# x0 = [1, 0, 0, 0]
+# pend_prob = apr.Explicit_Problem(pend_rhs, x0, 0)
+# pend_prob.name = 'Stiff spring Pendulum'
+
+# # Settup of implicit solver
+# pend_solv = BDF_3(pend_prob)
+# t, y = pend_solv.simulate(5)
+# pend_solv.plot()
