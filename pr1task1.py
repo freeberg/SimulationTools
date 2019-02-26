@@ -2,25 +2,26 @@ from scipy import *
 from pylab import *
 import numpy as np
 
+from BDF4_pr1task2 import BDF_4
+from BDF3_pr1task2 import BDF_3
+
 import assimulo.problem as apr
 import assimulo.solvers as aso
-from BDF3_pr1task2 import BDF_3
-from BDF4_pr1task2 import BDF_4
 
-# Construct LHS
+# Construct RHS
 def lambda_func(var1, var2, k):
-  taljare = sqrt(var1**2+var2**2) -1
-  namnare = sqrt(var1**2+var2**2)
+  numerator = sqrt(var1**2+var2**2) -1
+  dinomerator = sqrt(var1**2+var2**2)
   
-  l_func = k * taljare/namnare
+  l_func = k * numerator/dinomerator
   return l_func
 
 def pend_rhs(t,x):
   k = 10**3
-  a1 = x[0] #blue
-  a2 = x[1] #orange
-  a3 = x[2] #green
-  a4 = x[3] #red
+  a1 = x[0]
+  a2 = x[1]
+  a3 = x[2]
+  a4 = x[3] 
   return np.array([a3, a4, -a1*lambda_func(a1,a2,k), -a2*lambda_func(a1,a2,k) - 1])
 
 
@@ -28,11 +29,24 @@ def pend_rhs(t,x):
 # and initial values (are these any good)
 x0 = [0.9, 0.1, 0, 0]
 pend_prob = apr.Explicit_Problem(pend_rhs, x0, 0)
-pend_prob.name = 'Pendulum'
+pend_prob.name = 'Pendulum Position'
 
 # Settup of implicit solver
-pend_solv = BDF_4(pend_prob)
-pend_solv.simulate(0.5)
+pend_solv = aso.CVode(pend_prob)
 
-# Plot solution
-pend_solv.plot()
+bdf3_solv = BDF_3(pend_prob)
+bdf4_solv = BDF_4(pend_prob)
+
+#Simulate
+simulation_time = 20
+
+tc, yc = pend_solv.simulate(simulation_time)
+pend_solv.plot([1., 1., 0., 0.])
+
+# t, y = bdf3_solv.simulate(simulation_time)
+# bdf3_solv.plot([1., 1., 1., 1.])
+
+# t, y = bdf4_solv.simulate(simulation_time)
+# bdf4_solv.plot([1., 1., 1., 1.])
+
+

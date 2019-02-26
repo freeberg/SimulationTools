@@ -14,9 +14,9 @@ class BDF_3(Explicit_ODE):
     """
     BDF-3
     """
-    tol=1.e-8     
+    tol=1.e-6
     maxit=100     
-    maxsteps=100000
+    maxsteps=10000000
     
     def __init__(self, problem):
         Explicit_ODE.__init__(self, problem) #Calls the base class
