@@ -4,7 +4,7 @@ def init_squeezer():
 	""" 
 	The positions y_1 (q vector)
 	The constraint lambda ??
-	y hstack stack horizontally ??
+	y hstack stack horizontally, first position, derivatives, lambdas
 	yp the derivatives of angles/postions
 	"""
 	y_1 = array([-0.0617138900142764496358948458001,  #  beta
@@ -25,7 +25,7 @@ def init_squeezer():
 	return y,yp
 
 # Probably our rhs, requires that our solvers is tweaked I guess
-def squeezer (t, y, yp):
+def squeezer (t, y, yp, index):
 	"""
 	Residual function of the 7-bar mechanism in
 	Hairer, Vol. II, p. 533 ff, see also formula (7.11)
@@ -51,13 +51,16 @@ def squeezer (t, y, yp):
 	# Spring data
 	c0=4530.
 	lo=0.07785
+
 	# Initial computations and assignments
 	beta,theta,gamma,phi,delta,omega,epsilon=y[0:7]
-	bep,thp,gap,php,dep,omp,epp=y[7:14]
-	lamb=y[14:20]
+	if index != 0:
+		bep,thp,gap,php,dep,omp,epp=y[7:14]
+		lamb=y[14:20]
 	sibe,sith,siga,siph,side,siom,siep=sin(y[0:7])
 	cobe,coth,coga,coph,code,coom,coep=cos(y[0:7])
 	
+	# Start calculating
 	sibeth = sin(beta+theta);cobeth = cos(beta+theta)
 	siphde = sin(phi+delta);cophde = cos(phi+delta)
 	siomep = sin(omega+epsilon);coomep = cos(omega+epsilon)
@@ -84,14 +87,15 @@ def squeezer (t, y, yp):
 	force = - c0 * (lang - lo)/lang
 	fx = force * (xd-xc)
 	fy = force * (yd-yc)
-	ff=array([
-		mom - m2*da*rr*thp*(thp+2*bep)*sith,	
-		m2*da*rr*bep**2*sith,
-		fx*(sc*coga - sd*siga) + fy*(sd*coga + sc*siga),
-		m4*zt*(e-ea)*dep**2*coph,
-		- m4*zt*(e-ea)*php*(php+2*dep)*coph,
-		- m6*u*(zf-fa)*epp**2*coom,
-		m6*u*(zf-fa)*omp*(omp+2*epp)*coom])
+	if index != 0:
+		ff=array([
+			mom - m2*da*rr*thp*(thp+2*bep)*sith,	
+			m2*da*rr*bep**2*sith,
+			fx*(sc*coga - sd*siga) + fy*(sd*coga + sc*siga),
+			m4*zt*(e-ea)*dep**2*coph,
+			- m4*zt*(e-ea)*php*(php+2*dep)*coph,
+			- m6*u*(zf-fa)*epp**2*coom,
+			m6*u*(zf-fa)*omp*(omp+2*epp)*coom])
 
 	#  constraint matrix  G
 
@@ -130,12 +134,33 @@ def squeezer (t, y, yp):
 	g[5] = rr*sibe - d*sibeth - zf*siomep + u*coep - ya
 
 	#     Construction of the residual
+	if index == 3:
+		res_1 = yp[0:7] - y[7:14]
+		res_2 = dot(m,yp[7:14]) - ff[0:7]+dot(gp.T,lamb)
+		res_3 = g
 
-	res_1 = yp[0:7] - y[7:14]
-	res_2 = dot(m,yp[7:14])- ff[0:7]+dot(gp.T,lamb)
-	res_3 = g
-	
+	elif index == 2:
+		res_1 = yp[0:7] - y[7:14]
+		res_2 = dot(m,yp[7:14]) - ff[0:7]+dot(gp.T,lamb)
+		w = y[7:14]
+		res_3 = dot(gp,w)
+
+	elif index == 1:
+		res_1 = yp[0:7] - y[7:14]
+		res_2 = dot(m,yp[7:14]) - ff[0:7]+dot(gp.T,lamb)
+		w = y[7:14]
+		gqq=zeros((6,))
+		#print("w in defaultSq: ", w)
+		gqq[0]=-rr*cobe*w[0]**2 + d*cobeth*(w[0]+w[1])**2 + ss*siga*w[2]**2
+		gqq[1]=-rr*sibe*w[0]**2 + d*sibeth*(w[0]+w[1])**2 - ss*coga*w[2]**2
+		gqq[2]=-rr*cobe*w[0]**2 + d*cobeth*(w[0]+w[1])**2 + e*siphde*(w[3]+w[4])**2 + zt*code*w[4]**2
+		gqq[3]=-rr*sibe*w[0]**2 + d*sibeth*(w[0]+w[1])**2 - e*cophde*(w[3]+w[4])**2 + zt*side*w[4]**2 
+		gqq[4]=-rr*cobe*w[0]**2 + d*cobeth*(w[0]+w[1])**2 + zf*coomep*(w[5]+w[6])**2 + u*siep*w[6]**2
+		gqq[5]=-rr*sibe*w[0]**2 + d*sibeth*(w[0]+w[1])**2 + zf*siomep*(w[5]+w[6])**2 - u*coep*w[6]**2	
+		return y, lamb, g, gp, ff, m
+	else:
+		return g
+
 	return hstack((res_1,res_2,res_3))
-
 
 	

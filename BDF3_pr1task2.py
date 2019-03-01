@@ -81,6 +81,7 @@ class BDF_3(Explicit_ODE):
         self.statistics["nfcns"] += 1
         
         f = self.problem.rhs
+        yp = y + h*f(t, y) 
         return t + h, y + h*f(t, y) 
         
     def step_BDF3(self,T,Y, h):
