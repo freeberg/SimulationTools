@@ -24,7 +24,6 @@ def init_squeezer():
 			0.,0.,0.,0.,0.]),zeros((6,))))
 	return y,yp
 
-# Probably our rhs, requires that our solvers is tweaked I guess
 def squeezer (t, y, yp, index):
 	"""
 	Residual function of the 7-bar mechanism in
@@ -150,7 +149,6 @@ def squeezer (t, y, yp, index):
 		res_2 = dot(m,yp[7:14]) - ff[0:7]+dot(gp.T,lamb)
 		w = y[7:14]
 		gqq=zeros((6,))
-		#print("w in defaultSq: ", w)
 		gqq[0]=-rr*cobe*w[0]**2 + d*cobeth*(w[0]+w[1])**2 + ss*siga*w[2]**2
 		gqq[1]=-rr*sibe*w[0]**2 + d*sibeth*(w[0]+w[1])**2 - ss*coga*w[2]**2
 		gqq[2]=-rr*cobe*w[0]**2 + d*cobeth*(w[0]+w[1])**2 + e*siphde*(w[3]+w[4])**2 + zt*code*w[4]**2
@@ -158,7 +156,9 @@ def squeezer (t, y, yp, index):
 		gqq[4]=-rr*cobe*w[0]**2 + d*cobeth*(w[0]+w[1])**2 + zf*coomep*(w[5]+w[6])**2 + u*siep*w[6]**2
 		gqq[5]=-rr*sibe*w[0]**2 + d*sibeth*(w[0]+w[1])**2 + zf*siomep*(w[5]+w[6])**2 - u*coep*w[6]**2	
 		return y, lamb, g, gp, ff, m
+
 	else:
+		# This function is used solely to get the g function for finding initial values
 		return g
 
 	return hstack((res_1,res_2,res_3))
