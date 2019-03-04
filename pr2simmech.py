@@ -32,13 +32,11 @@ def get_initial():
   return q0
 
 
-print(get_initial())
-
 # Settup of explicit problem
 # and initial values (are these any good)
 y0,yp0 = sq.init_squeezer()
 my_init = get_initial()
-print(y0[:7] - my_init)
+print(" ", y0[:7] - my_init)
 posIndex = list(range(0,7))
 velocityIndex = list(range(7,14))
 lambdaIndex = list(range(14,20))
