@@ -1,5 +1,6 @@
 from  scipy import *
 import scipy.optimize as op
+import scipy.linalg as linalg
 from  pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,9 +21,17 @@ def squeezer_i2 (t, y, yp):
   r = sq.squeezer(t, y, yp, 2)
   return r
 
-def squeezer_i1 (t, y, yp):
-  r = sq.squeezer(t, y, yp, 1)
-  return r
+def squeezer_i1 (t, y):
+  y, m, ff, gp, gpp = sq.squeezer(t, y, zeros(7), 1)
+  invM = linalg.inv(m)
+  a = dot(gp, dot(invM, gp.T))
+  b = gpp + dot(gp,(dot(invM, ff)))
+  lamb = linalg.solve(a, b)
+  w = dot(linalg.inv(m), ff - dot(gp.T, lamb))
+  yp = zeros(14)
+  yp[0:7] = y[7:14]
+  yp[7:14] = w
+  return yp
 
 def g(y):
   y = np.insert(y, 1, 0) #for theta = 0 since only have six equations for seven variables
@@ -42,7 +51,7 @@ def plot_squ_simulations(s, lagrange=False):
 
   y0,yp0 = sq.init_squeezer()
   my_init = get_initial()
-  print(" ", y0[:7] - my_init)
+  #print(" ", y0[:7] - my_init)
   pos = list(range(0,7))
   velo = list(range(7,14))
   lamb = list(range(14,20))
@@ -94,7 +103,7 @@ def plot_squ_simulations(s, lagrange=False):
       p = (y2[:,lamb])#+1*np.pi)%(2*np.pi)-1*np.pi
     else:
       p = (y2[:,pos]+1*np.pi)%(2*np.pi)-1*np.pi 
-    plt.plot(t3, p, '-', ms=0.7)
+    plt.plot(t2, p, '-', ms=0.7)
     plt.title('Index-2')
     plt.xlabel('Time (s)')
     plt.ylabel('Angle (rad)')
@@ -105,9 +114,19 @@ def plot_squ_simulations(s, lagrange=False):
 
 ############ INDEX-1 ###############
   if '1' in s:
-    squ_prob = apr.Explicit_Problem(squeezer_i1, y0, yp0, t0)
-    squ_sim1 = aso.runge_kutta(squ_prob)
-    squ_sim1.plot()
+    squ_prob = apr.Explicit_Problem(squeezer_i1, y0[0:14], t0)
+    squ_sim1 = aso.RungeKutta34(squ_prob)
+    #yp = squeezer_i1(0.01, y0[0:14])
+    #print(yp)
+    t1, y1 = squ_sim1.simulate(0.02, 10000)
+    # squ_sim1.plot()
+    p = (y1[:,pos]+1*np.pi)%(2*np.pi)-1*np.pi 
+    plt.plot(t1, p, '-', ms=0.7)
+    plt.title('Index-1')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angle (rad)')
+    plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
+    plt.show()
     print("not implemented index 1 yet")
     input("Press Enter to continue...")
 
@@ -127,4 +146,4 @@ def plot_squ_simulations(s, lagrange=False):
     plt.show()
 
 
-plot_squ_simulations("23c", True)
+plot_squ_simulations("1", True)
