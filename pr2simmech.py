@@ -22,12 +22,16 @@ def squeezer_i2 (t, y, yp):
   return r
 
 def squeezer_i1 (t, y):
+  if (t == 0):
+        y, yd0 = sq.init_squeezer()
+        return yd0
   y, m, ff, gp, gpp = sq.squeezer(t, y, zeros(7), 1)
   invM = linalg.inv(m)
   a = dot(gp, dot(invM, gp.T))
   b = gpp + dot(gp,(dot(invM, ff)))
   lamb = linalg.solve(a, b)
-  w = dot(linalg.inv(m), ff - dot(gp.T, lamb))
+  x = ff - dot(gp.T, lamb)
+  w = dot(invM, x)
   yp = zeros(14)
   yp[0:7] = y[7:14]
   yp[7:14] = w
@@ -116,9 +120,10 @@ def plot_squ_simulations(s, lagrange=False):
   if '1' in s:
     squ_prob = apr.Explicit_Problem(squeezer_i1, y0[0:14], t0)
     squ_sim1 = aso.RungeKutta34(squ_prob)
+    squ_sim1.atol = np.ones(14)*1e-7
     #yp = squeezer_i1(0.01, y0[0:14])
     #print(yp)
-    t1, y1 = squ_sim1.simulate(0.02, 10000)
+    t1, y1 = squ_sim1.simulate(0.03, 10000)
     # squ_sim1.plot()
     p = (y1[:,pos]+1*np.pi)%(2*np.pi)-1*np.pi 
     plt.plot(t1, p, '-', ms=0.7)
@@ -127,7 +132,6 @@ def plot_squ_simulations(s, lagrange=False):
     plt.ylabel('Angle (rad)')
     plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
     plt.show()
-    print("not implemented index 1 yet")
     input("Press Enter to continue...")
 
 
@@ -145,5 +149,9 @@ def plot_squ_simulations(s, lagrange=False):
     #plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
     plt.show()
 
+# Run default all indexes
+plot_squ_simulations("123")
 
-plot_squ_simulations("1", True)
+# Run simulations to compare Lagrange Multipliers
+lagrange = True
+plot_squ_simulations("23c", lagrange)
