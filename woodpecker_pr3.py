@@ -101,6 +101,7 @@ def stateI(t,y, yp):
     
     return r
 
+
 def stateII(t,y, yp):
     lmb1, lmb2  = y[6], y[7]
     zpp, fi_spp, fi_bpp = yp[3], yp[4], yp[5]
@@ -120,6 +121,7 @@ def stateII(t,y, yp):
 
     return r
 
+
 def stateIII(t,y,yp):
     lmb1, lmb2  = y[6], y[7]
     zpp, fi_spp, fi_bpp = yp[3], yp[4], yp[5]
@@ -135,10 +137,11 @@ def stateIII(t,y,yp):
     r[4] = zp + r_s*fi_sp
     r[5] = v - zp
     r[6] = u_s - fi_sp
+    print("u_s", u_s, "fi_sp", fi_sp)
     r[7] = u_b - fi_bp
 
     return r
-    
+
 
 
 def default_residual(y, yp):
@@ -194,97 +197,101 @@ def woodpecker(t, y, yp, sw):
 ####### FINAL TASK #########
 
 global s
-s = [1, 0, 0, 0]
+s = [0, 1, 0, 0]
 global newS
-newS = False
+newS = True
 global prev_ev
-prev_ev = [4,0]
+prev_ev = [1,1]
+
+
 def woodpecker_if(t, y, yp):
     global s
-    y, yp = get_state(y, yp)
-
-    if s[0]:
-        print("st 1")
-        r = stateI(t,y,yp)
-    elif s[1]:
-        print("st 2")
-        r = stateII(t,y,yp)
-    elif s[2]:
-        print("st 3")
-        r = stateIII(t,y,yp)
-    elif s[3]:
-        print("st 4")
-        r = stateIV(t,y,yp)
-
-    return r
-
-def get_state(y, yp):
-    global s
-    print(s)
-    fi_bp=yp[2]
-    state_info = get_events(y, yp)
-    print(state_info)
-    ns = s
-
-    if s[0]:
-        if (fi_bp < 0 and state_info[0]):
-            mom_conserv_if(y, yp)
-            ns=[0,1,0,0]
-        elif (fi_bp > 0 and state_info[1]): 
-            mom_conserv_if(y, yp)
-            ns=[0,0,1,0]
-
-    elif s[1]:
-        if (state_info[0]):
-            ns=[1,0,0,0]
-    elif s[2]:
-        if (fi_bp < 0 and state_info[0]):
-            ns=[1,0,0,0]
-        elif (fi_bp > 0 and state_info[1]):
-            print("peck")
-            y, yp = add_peck_if(y, yp)
-    elif s[3]:
-        y, yp = add_peck_if(y, yp)
-        ns = [0,0,1,0]
-    
     global newS
-    if ns != s:
-        newS = True
-    else:
-        newS = False
-    s = ns
-    return y, yp
-
-def get_events(y, yp):
+    global prev_ev
+    #print("s", s, "prev_ev", prev_ev)
+    fi_bp=yp[2]
     phi_b=y[2]
     phi_s=y[1]
-    lambda_1=y[6]
-    global s
-    print(s)
-    
-    if s[0]:   
+    lambda_1= y[6] #y[4] - yp[1]
+    ns = s
+
+######### STATE I ###########
+    if s[0]:
+        print("st 1")
         e_1 = h_s*phi_s + ( r_s -  r_0)
         e_2 = h_s*phi_s - ( r_s -  r_0)
+        if (newS):
+            newS = False
+        else:
+            if (prev_ev[0] * e_1) < 0 and fi_bp < 0:
+                print("before mom", yp)
+                y,yp = mom_conserv_if(y, yp)
+                print("after mom", yp)
+                ns=[0,1,0,0]
+                newS == True
+            elif (prev_ev[1] * e_2) < 0 and fi_bp > 0:
+                print("before mom", yp)
+                y,yp = mom_conserv_if(y, yp)
+                print("after mom", yp)
+                ns=[0,0,1,0]
+                newS = True
+        
+        prev_ev = np.array([e_1, e_2])
+        
 
+######### STATE II ###########
     elif s[1]:
+        # print("st 2")
         e_1 = lambda_1
         e_2 = 1
+        print("e_1 * prev_ev in s2", e_1*prev_ev[0])
+        if (newS):
+            newS = False
+        else:
+            e = e_1*prev_ev[0]
+            print(e)
+            if e < 0:
+                print("end up here?")
+                ns=[1,0,0,0]
+                newS = True
+        
+        prev_ev = np.array([e_1, e_2])
 
-    else: 
+
+######### STATE III ###########
+    elif s[2]:
         e_1 = lambda_1  
         e_2 = h_b*phi_b-(l_s+l_g-l_b-r_0)
-    
-    ev = np.array([0,0])
-    global prev_ev 
-    if ev[0] == 4 or newS:
+        if (newS):
+            print("st 3 on", t)
+            newS = False
+        else:
+            print("e_1", e_1, "e_2", e_2)
+            if (prev_ev[0] * e_1) < 0 and fi_bp < 0:
+                print("change to one")
+                ns=[1,0,0,0]
+                newS = True
+            elif (prev_ev[1] * e_2) < 0 and fi_bp > 0:
+                y, yp = add_peck_if(y, yp)
+            #else:
+               # print("fi_bp", fi_bp)
         prev_ev = np.array([e_1, e_2])
-    else:
-        if prev_ev[0] * e_1 < 0:
-            ev[0] = 1
-        if prev_ev[1] * e_2 < 0:
-            ev[1] = 1
-    prev_ev = np.array([e_1,e_2])
-    return ev
+
+    if newS:
+        s = ns
+        print("new state", s)
+    if ns[0]:
+        return stateI(t,y,yp)
+    if ns[1]:
+        return stateII(t,y,yp)
+    if ns[2]:
+        return stateIII(t,y,yp)
+    if ns[3]:
+        print("state 4??")
+        return [0,0,0,0,0,0,0,0]
+
+
+
 
 def mom_conserv_if(y, yp):
     print("In mom")
@@ -299,6 +306,7 @@ def mom_conserv_if(y, yp):
 
 def add_peck_if(y, yp):
     global pecks
+    print("peck")
     pecks = pecks + 1
     yp[2] = -yp[2]
     y[5] = -y[5]
@@ -331,13 +339,13 @@ startsw = [1,0,0,0]
 y0 = np.array([0.5, 0,0, -0, 0, 0.5,-1e-4,0])
 yd0 =  np.array([-0, 0, 0.5,-g, 1e-12, 0, 0, 0])
 
-# w0 = -0.91
-# y0 = np.array([0.5, 0,0, -0, w0, w0,-1e-4,0])
-# yd0 =  np.array([-0, w0, w0,-g, 1e-12, 0, 0, 0])
+w0 = -0.91
+y0 = np.array([0.5, 0,0, -0, w0, w0,-1e-4,0])
+yd0 =  np.array([-0, w0, w0,-g, 1e-12, 0, 0, 0])
 
-# y0 = np.array([4.83617428e-01, -3.00000000e-02, -2.16050178e-01, 1.67315232e-16, -5.39725367e-14, -1.31300925e+01, -7.20313572e-02, -6.20545138e-02])
-# yd0 = np.array([1.55140566e-17, -5.00453439e-15, -1.31302838e+01, 6.62087352e-13, -2.13577297e-10, 2.21484026e+02, -4.67637454e+00, -2.89824658e+00])
-# startsw = [0,1, 0, 0]
+y0 = np.array([4.83617428e-01, -3.00000000e-02, -2.16050178e-01, 1.67315232e-16, -5.39725367e-14, -1.31300925e+01, -7.20313572e-02, -6.20545138e-02])
+yd0 = np.array([1.55140566e-17, -5.00453439e-15, -1.31302838e+01, 6.62087352e-13, -2.13577297e-10, 2.21484026e+02, -4.67637454e+00, -2.89824658e+00])
+startsw = [0, 1, 0, 0]
 
 problem = apr.Implicit_Problem(woodpecker_if, y0, yd0, t0)#, sw0=startsw)
 
@@ -358,7 +366,7 @@ sim.algvar[lambdaIndex] = 1
 sim.suppress_alg = True
 ncp = 500
 
-tfinal = 2
+tfinal = 0.1
 t, y, yd = sim.simulate(tfinal, ncp)
 y = y[:,[ 0,  ]]
 plt.plot(t, y)
