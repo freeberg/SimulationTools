@@ -55,7 +55,7 @@ def plot_squ_simulations(s, lagrange=False):
 
   y0,yp0 = sq.init_squeezer()
   my_init = get_initial()
-  #print(" ", y0[:7] - my_init)
+  print(" ", np.abs(y0[:7] - my_init))
   pos = list(range(0,7))
   velo = list(range(7,14))
   lamb = list(range(14,20))
@@ -84,7 +84,7 @@ def plot_squ_simulations(s, lagrange=False):
     plt.title('Index-3')
     plt.xlabel('Time (s)')
     plt.ylabel('Angle (rad)')
-    plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
+    #plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
     plt.show()
     
     input("Press Enter to continue...")
@@ -111,7 +111,7 @@ def plot_squ_simulations(s, lagrange=False):
     plt.title('Index-2')
     plt.xlabel('Time (s)')
     plt.ylabel('Angle (rad)')
-    plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
+    #plt.legend(["beta", "theta", "gamma", "phi", "delta", "omega", "epsilon"], loc = 'lower left')
     plt.show()
 
     input("Press Enter to continue...")
@@ -134,6 +134,19 @@ def plot_squ_simulations(s, lagrange=False):
     plt.show()
     input("Press Enter to continue...")
 
+  if '3t' in s:
+    dt = [1000000 * np.absolute(t3[i+1] - t3[i]) for i in range(len(t3)-1)]
+    print((dt[100:120]))
+    print((t3[100:120]))
+    plt.plot(t3[0:len(t3)-1], dt, '.', ms=0.7)
+    plt.show()
+  
+  if '2t' in s:
+    dt = [1000000 * np.absolute(t2[i+1] - t2[i]) for i in range(len(t2)-1)]
+    print((dt[100:120]))
+    print((t2[100:120]))
+    plt.plot(t2[0:len(t2)-1], dt, '.', ms=0.7)
+    plt.show()
 
 
 ###### Difference in lagrange ######
@@ -150,8 +163,8 @@ def plot_squ_simulations(s, lagrange=False):
     plt.show()
 
 # Run default all indexes
-plot_squ_simulations("123")
+plot_squ_simulations("23c", True)
 
 # Run simulations to compare Lagrange Multipliers
-lagrange = True
-plot_squ_simulations("23c", lagrange)
+# lagrange = True
+# plot_squ_simulations("23c", lagrange)
