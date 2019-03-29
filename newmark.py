@@ -1,22 +1,3 @@
-<<<<<<< HEAD
-from  scipy import *
-from  pylab import *
-from assimulo.explicit_ode import Explicit_ODE
-from assimulo.ode import *
-import numpy as np
-import matplotlib.pyplot as mpl
-import scipy.linalg as SL
-from assimulo.solvers import CVode
-
-class Newmark(Explicit_ODE):
-    
-    tol=1.e-6
-    maxit=100
-    maxsteps=1000000000000
-    
-    def __init__(self, problem):
-        Explicit_ODE.__init__(self, problem) #Calls the base class
-=======
 import scipy as sp
 import scipy.linalg as SL
 import numpy as np
@@ -43,7 +24,6 @@ class newmark(Explicit_ODE):
     def __init__(self, problem):
 
         apr.Explicit_ODE.__init__(self, problem) #Calls the base class
->>>>>>> 63a0bb546e8d59c3a7af40cd021326ee745300a3
         
         #Solver options
         self.options["h"] = 0.001
