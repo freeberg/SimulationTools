@@ -18,15 +18,18 @@ class newmark(Explicit_ODE):
     tol=1.e-6
     maxit=100
     maxsteps=100000
-    HHT = False
+    
 
     
     def __init__(self, problem):
 
-        apr.Explicit_ODE.__init__(self, problem) #Calls the base class
+        Explicit_ODE.__init__(self, problem) #Calls the base class
         
         #Solver options
         self.options["h"] = 0.001
+        self.alpha = -1/3
+        self.gamma = 1/2
+        self.HHT = False
         
         #Statistics
         self.statistics["nsteps"] = 0
@@ -35,6 +38,9 @@ class newmark(Explicit_ODE):
     def _set_h(self,h):
       self.options["h"] = float(h)
 
+    def _set_constants(self, alpha, gamma):
+      self.alpha = alpha
+      self.gamma = gamma
 
     def _get_h(self):
         return self.options["h"]
@@ -63,9 +69,9 @@ class newmark(Explicit_ODE):
             self.statistics["nsteps"] += 1
 
             if i <= k-1:  # initial step
-                t_np1,y_np1 = self.step_EE(tres[-1], yres[-1], h)
+                t_np1,y_np1 = self.step_ee(tres[-1], yres[-1], h)
             else:
-                t_np1, y_np1 = self.step_newmark(self, tres[-1:-(k-1):-1], yres[-1:-(k-1):-1], h)  
+                t_np1, y_np1 = self.step_newmark(self, tres[-1], yres[-1:2], h)  
             
             tres.append(t_np1)
             yres.append(y_np1)
@@ -81,14 +87,14 @@ class newmark(Explicit_ODE):
 
 
     def step_ee(self, t, y, h):
-        print("h")
+      self.statistics["nfcns"] += 1
+      f = self.problem.rhs
+      return t + h, y + h*f(t, y)
 
     def step_newmark(self,T,Y, h):
         """
         Newmark
         """
-        gamma = 1/2
-        alpha = -1/3
         # beta = 0
 
         f=self.problem.rhs
@@ -105,11 +111,11 @@ class newmark(Explicit_ODE):
         for i in range(self.maxit):
             self.statistics["nfcns"] += 1
             if (HHT):
-                gamma = (1-2*alpha) / 2
-                beta = (1 - alpha)**2 / 4
-                a_n1 = (1 - alpha) * f(p_n1, t_n1) - alpha * f(p_n, t_n)
-                p_n1 = p_n + h*v_n + 1/2 * h**2 * ((1 - 2*beta) * a_n + 2*beta * a_n1
-                v_n1 = v_n + h*((1 - gamma)*a_n + gamma * a_n1)
+              gamma = (1-2*alpha) / 2
+              beta = (1 - alpha)**2 / 4
+              a_n1 = (1 - alpha) * f(p_n1, t_n1) - alpha * f(p_n, t_n)
+              p_n1 = p_n + h*v_n + 1/2 * h**2 * ((1 - 2*beta) * a_n + 2*beta * a_n1)
+              v_n1 = v_n + h*((1 - gamma)*a_n + gamma * a_n1)
             else:
                 p_n1 = p_n + h*v_n + 1/2 * h**2 * a_n
                 a_n1 = f(p_n1, t_n1)
