@@ -8,16 +8,16 @@ Created on Wed Jan 30 12:01:39 2019
 from scipy import *
 from pylab import *
 import numpy as np
+import math as m
 
-from newmark import newmark
+from newmark_by_ay import newmark
 
 import assimulo.problem as apr
-import assimulo.solvers as aso
 
 # Construct RHS
 def lambda_func(var1, var2, k):
-  numerator = sqrt(var1**2+var2**2) -1
-  dinomerator = sqrt(var1**2+var2**2)
+  numerator = m.sqrt(var1**2+var2**2) -1
+  dinomerator = m.sqrt(var1**2+var2**2)
   
   l_func = k * numerator/dinomerator
   return l_func
@@ -41,9 +41,11 @@ pend_prob.name = 'Stiff spring Pendulum'
 
 # Settup of implicit solver
 pend_solv = newmark(pend_prob)
+pend_solv._set_constants(0, 0, 1)
+pend_solv._set_HHT(False)
 
 #Simulate
-simulation_time = 20
+simulation_time = 5
 
 pend_solv.simulate(simulation_time)
 pend_solv.plot()
