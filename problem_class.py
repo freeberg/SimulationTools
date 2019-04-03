@@ -24,19 +24,27 @@ class sec_ord_prob(apr.Explicit_Problem):
   """
   #Sets the initial conditons directly into the problem
   y0 = [0.9, 0.1, 0, 0]
+  yd0 = [0.89, 0.09, 0, 0]
 
   def __init__(self, rhs, y0, yd0, t0=0):
-    self.rhs_orig = rhs
-    def newrhs(t, yyd, **kwargs):
+    self.rhs_given = rhs
+    def newrhs(t, y, yd, **kwargs):
       """transform y'' = rhs(t,y,y') into
       y' = v
       v' = rhs(t,y,v)
       and pass that into Explicit_Problem
       """
-      n=len(yyd) / 2
-      dv = rhs(t, yyd[:n])
+      dmp = False
+      yyd = np.hstack((y, yd))
+      n=int(len(yyd) / 2)
+
+      if dmp:
+        dv = rhs(t, yyd[:n], yyd[n:])
+      else:
+        dv = rhs(t, yyd[:n])
+
       return np.hstack((yyd[n:], dv))
 
-    # need to stack y0 and yd0 together as initial condition for newrhs
     yyd0 = np.hstack((y0, yd0))
-    super(sec_ord_prob, self).__init__(newrhs, yyd0, t0)
+    # need to stack y0 and yd0 together as initial condition for newrhs
+    super(sec_ord_prob, self).__init__(newrhs, y0, yd0, t0)

@@ -8,6 +8,7 @@ from assimulo.explicit_ode import Explicit_ODE
 from assimulo.implicit_ode import Implicit_ODE
 from assimulo.ode import *
 import matplotlib as plt
+from problem_class import sec_ord_prob
 
 
 class newmark(Explicit_ODE):
@@ -85,7 +86,7 @@ class newmark(Explicit_ODE):
     else:
       raise Exception('Final time not reached within maximum ' +
                                    'number of steps')
-    return Explicit_ODE.ID_PY_OK, tres, yres
+    return Explicit_ODE.ID_PY_OK, tres, yres, vres, ares
   
   
   def step_newmark(self, T, Y, V, A, h):
@@ -103,7 +104,10 @@ class newmark(Explicit_ODE):
       v_n = V
       a_n = A
       # predictor
-      p_np1 = p_n + h*f(t_n, p_n)  
+      if isinstance(self.problem,sec_ord_prob):
+        p_np1 = p_n + h*f(t_n, p_n, v_n)  
+      else:
+        p_np1 = p_n + h*f(t_n, p_n)  
       # corrector with fixed point iteration
       for i in range(self.maxit):
           self.statistics["nfcns"] += 1
