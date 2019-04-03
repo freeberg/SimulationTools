@@ -61,8 +61,8 @@ class newmark(Explicit_ODE):
     h = min(h, abs(tf-t))
     
     #Lists for storing the result
-    yd = 0
-    ydd = 0
+    yd = [0.89, 0.09, 0, 0]
+    ydd = [0,0,0,0]    #causing a problem
     tres = [t]
     yres = [y]
     vres = [yd]
@@ -103,9 +103,11 @@ class newmark(Explicit_ODE):
       p_n = Y
       v_n = V
       a_n = A
+
       # predictor
       if isinstance(self.problem,sec_ord_prob):
-        p_np1 = p_n + h*f(t_n, p_n, v_n)  
+        fn = f(t_n, p_n, v_n)
+        p_np1 = p_n + h*fn
       else:
         p_np1 = p_n + h*f(t_n, p_n)  
       # corrector with fixed point iteration
@@ -118,9 +120,9 @@ class newmark(Explicit_ODE):
             v_n1 = v_n + h*((1 - gamma)*a_n + gamma * a_n1)
             a_n1 = (1 + self.alpha) * f(t_n1, p_n1, v_n1) - self.alpha * f(t_n, p_n, v_n)
           else:
-              p_n1 = p_n + h*v_n + 1/2 * h**2 * ((1-2*self.beta)*a_n )#+ 2*self.beta*a_n1)
-              a_n1 = f(t_n1, p_n1) #f(t_n1, p_n1, v_n1)
+              p_n1 = p_n + h*v_n + 1/2 * h**2 * (((1-2*self.beta)*a_n ) + 2*self.beta*a_n1)
               v_n1 = v_n + h*((1 - self.gamma)*a_n + self.gamma * a_n1)
+              a_n1 = f(t_n1, p_n1, v_n1)
           if SL.norm(p_np1-p_n1) < self.tol:
               return t_n1,p_n1,v_n1,a_n1
       else:

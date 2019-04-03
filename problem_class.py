@@ -28,23 +28,29 @@ class sec_ord_prob(apr.Explicit_Problem):
 
   def __init__(self, rhs, y0, yd0, t0=0):
     self.rhs_given = rhs
+    
+    def _set_dmp(d = False): # set damping outside of the class
+        self.dmp = d
+    
     def newrhs(t, y, yd, **kwargs):
       """transform y'' = rhs(t,y,y') into
       y' = v
       v' = rhs(t,y,v)
       and pass that into Explicit_Problem
       """
-      dmp = False
-      yyd = np.hstack((y, yd))
-      n=int(len(yyd) / 2)
+      self.dmp = False
 
-      if dmp:
+      yyd = np.hstack((y, yd))
+      n=int(len(y))#copy entire y
+
+      if self.dmp:
         dv = rhs(t, yyd[:n], yyd[n:])
       else:
         dv = rhs(t, yyd[:n])
+      
+      return dv # return whatever the rhs has calculated
 
-      return np.hstack((yyd[n:], dv))
-
-    yyd0 = np.hstack((y0, yd0))
+#    yyd0 = np.hstack((y0, yd0))
     # need to stack y0 and yd0 together as initial condition for newrhs
     super(sec_ord_prob, self).__init__(newrhs, y0, yd0, t0)
+  

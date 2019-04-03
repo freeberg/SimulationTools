@@ -11,6 +11,7 @@ import numpy as np
 import math as m
 
 from newmark_by_ay import newmark
+from problem_class import sec_ord_prob
 
 import assimulo.problem as apr
 
@@ -33,15 +34,22 @@ def pend_rhs(t,x):
   return np.array([a3, a4, -a1*lambda_func(a1,a2,k), -a2*lambda_func(a1,a2,k) - 1])
 
 
+# The question is if the p, v, and a should each be of size 4
+# as it is now x0 contains both position and acceleration...
+
+
 # Settup of explicit problem
 # and initial values (are these any good)
 x0 = [0.9, 0.1, 0, 0]
-pend_prob = apr.Explicit_Problem(pend_rhs, x0, 0)
+pend_prob = sec_ord_prob(pend_rhs, x0, 0)
 pend_prob.name = 'Stiff spring Pendulum'
 
-# Settup of implicit solver
+# Settup of explicit solver
 pend_solv = newmark(pend_prob)
-pend_solv._set_constants(0, 0, 1)
+alpha = 0
+beta = 0
+gamma = 1
+pend_solv._set_constants(alpha, beta, gamma)
 pend_solv._set_HHT(False)
 
 #Simulate
