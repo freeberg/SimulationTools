@@ -16,9 +16,9 @@ class newmark(Explicit_ODE):
   """
   newmark
   """
-  tol=1.e-6
+  tol=0.5
   maxit=100
-  maxsteps=100000
+  maxsteps=1000000000
     
 
     
@@ -61,8 +61,8 @@ class newmark(Explicit_ODE):
     h = min(h, abs(tf-t))
     
     #Lists for storing the result
-    yd = [0.89, 0.09, 0, 0]
-    ydd = [0,0,0,0]    #causing a problem
+    yd = np.array([0.89, 0.09, 0., 0.])
+    ydd = np.array([0.,0.,0.,0.])    #causing a problem
     tres = [t]
     yres = [y]
     vres = [yd]
@@ -73,7 +73,8 @@ class newmark(Explicit_ODE):
             break
         self.statistics["nsteps"] += 1
     
-        t_np1, y_np1, v_np1, a_np1 = self.step_newmark(tres[-1], yres[-1], vres[-1], ares[-1], h)  
+        t_np1, y_np1, v_np1, a_np1 = self.step_newmark(tres[-1], yres[-1], vres[-1], ares[-1], h)
+        
         
         tres.append(t_np1)
         yres.append(y_np1)
@@ -86,7 +87,8 @@ class newmark(Explicit_ODE):
     else:
       raise Exception('Final time not reached within maximum ' +
                                    'number of steps')
-    return Explicit_ODE.ID_PY_OK, tres, yres, vres, ares
+                                   
+    return ID_PY_OK, tres, yres
   
   
   def step_newmark(self, T, Y, V, A, h):
@@ -120,11 +122,13 @@ class newmark(Explicit_ODE):
             v_n1 = v_n + h*((1 - gamma)*a_n + gamma * a_n1)
             a_n1 = (1 + self.alpha) * f(t_n1, p_n1, v_n1) - self.alpha * f(t_n, p_n, v_n)
           else:
-              p_n1 = p_n + h*v_n + 1/2 * h**2 * (((1-2*self.beta)*a_n ) + 2*self.beta*a_n1)
-              v_n1 = v_n + h*((1 - self.gamma)*a_n + self.gamma * a_n1)
-              a_n1 = f(t_n1, p_n1, v_n1)
+              p_n1 = p_n + h * v_n + 1./2. * h**2. * (((1.-2.*self.beta)*a_n )) #+ 2*self.beta*a_n1)
+              a_n1 = self.problem.rhs_given(t_n1, p_n1)
+              # a_n1 = self.problem.rhs_given(t_n1, p_n1) #, v_n1)
+              v_n1 = v_n + h * ((1 - self.gamma)*a_n + self.gamma * a_n1)
           if SL.norm(p_np1-p_n1) < self.tol:
               return t_n1,p_n1,v_n1,a_n1
+          print("Close? ", SL.norm(p_np1-p_n1))
       else:
           raise Exception('Corrector could not converge ' +
                                        'within % iterations'%i)

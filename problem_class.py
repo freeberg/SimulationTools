@@ -23,8 +23,8 @@ class sec_ord_prob(apr.Explicit_Problem):
       (y,dy) = (y[:,:n],y[:,n:])
   """
   #Sets the initial conditons directly into the problem
-  y0 = [0.9, 0.1, 0, 0]
-  yd0 = [0.89, 0.09, 0, 0]
+  y0 = [0.9, 0.1, 0., 0.]
+  yd0 = [0.89, 0.09, 0., 0.]
 
   def __init__(self, rhs, y0, yd0, t0=0):
     self.rhs_given = rhs
@@ -41,7 +41,7 @@ class sec_ord_prob(apr.Explicit_Problem):
       self.dmp = False
 
       yyd = np.hstack((y, yd))
-      n=int(len(y))#copy entire y
+      n=len(y)#copy entire y
 
       if self.dmp:
         dv = rhs(t, yyd[:n], yyd[n:])

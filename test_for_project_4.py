@@ -40,20 +40,20 @@ def pend_rhs(t,x):
 
 # Settup of explicit problem
 # and initial values (are these any good)
-x0 = [0.9, 0.1, 0, 0]
-pend_prob = sec_ord_prob(pend_rhs, x0, 0)
+x0 = [0.9, 0.1, 0., 0.]
+pend_prob = sec_ord_prob(pend_rhs, x0, 0.)
 pend_prob.name = 'Stiff spring Pendulum'
 
 # Settup of explicit solver
 pend_solv = newmark(pend_prob)
-alpha = 0
-beta = 0
-gamma = 1
+alpha = 0.
+beta = 0.
+gamma = 1.
 pend_solv._set_constants(alpha, beta, gamma)
 pend_solv._set_HHT(False)
 
 #Simulate
-simulation_time = 5
+simulation_time = 0.8
 
 pend_solv.simulate(simulation_time)
 pend_solv.plot()
