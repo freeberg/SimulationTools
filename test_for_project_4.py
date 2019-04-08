@@ -10,7 +10,7 @@ from pylab import *
 import numpy as np
 import math as m
 
-from newmark_by_ay import newmark
+from newmark_by_eggy import newmark
 from problem_class import sec_ord_prob
 
 import assimulo.problem as apr
@@ -53,7 +53,7 @@ pend_solv._set_constants(alpha, beta, gamma)
 pend_solv._set_HHT(False)
 
 #Simulate
-simulation_time = 0.8
+simulation_time = 3
 
 pend_solv.simulate(simulation_time)
 pend_solv.plot()
