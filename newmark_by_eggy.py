@@ -62,8 +62,8 @@ class newmark(Explicit_ODE):
     h = min(h, abs(tf-t))
     
     #Lists for storing the result
-    yd = np.array([0.89, 0.09, 0., 0.])
-    ydd = np.array([0.,0.,0.,0.])    #causing a problem
+    yd = np.array([0.0, 0.0])
+    ydd = np.array([0.,0.])    #causing a problem
     tres = [t]
     yres = [y]
     vres = [yd]
@@ -122,9 +122,9 @@ class newmark(Explicit_ODE):
       
       guess = np.array([p_n, v_n, a_n])
       x = spo.fsolve(eq_syst, guess)
-      p_n1 = x[0:4]
-      v_n1 = x[4:8]
-      a_n1 = x[8:]
+      p_n1 = x[0:2]
+      v_n1 = x[2:4]
+      a_n1 = x[4:]
       return t_n1,p_n1,v_n1,a_n1
 
   
