@@ -50,10 +50,10 @@ alpha = -1/3
 beta = 1/2
 gamma = 1/2
 pend_solv._set_constants(alpha, beta, gamma)
-pend_solv._set_HHT(False)
+pend_solv._set_HHT(True)
 
 #Simulate
-simulation_time = 3
+simulation_time = 20
 
 pend_solv.simulate(simulation_time)
 pend_solv.plot()

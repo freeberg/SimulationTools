@@ -111,13 +111,17 @@ class newmark(Explicit_ODE):
         if (self.HHT):
                 gamma = (1-2*self.alpha) / 2
                 beta = (1 - self.alpha)**2 / 4
-                a = x[0] - p_n - h*v_n - 1/2*h**2 * ((1 - 2*beta) * a_n + 2*beta * x[2])
-                b = x[1] - v_n - h*((1 - gamma)*a_n + gamma * x[2])
-                c = x[2] - (1 + self.alpha) * f(t_n1, x[0]) + self.alpha * f(t_n, p_n)
+                p_n1 = p_n + h*v_n + 1/2*h**2 * ((1 - 2*beta) * a_n + 2*beta * x[4:6])
+                a = x[0:2] - p_n - h*v_n - 1/2*h**2 * ((1 - 2*beta) * a_n + 2*beta * x[4:6])
+                b = x[2:4] - v_n - h*((1 - gamma)*a_n + gamma * x[4:6])
+                c = x[4:6] - (1 + self.alpha) * f(t_n1, x[0:2]) + self.alpha * f(t_n, p_n1)
         else:
-                a = x[0] - p_n - h*v_n - 1./2.*h**2.*(((1.-2.*self.beta)*a_n ) + 2*self.beta*x[2])
-                b = x[1] - v_n - h*((1 - self.gamma)*a_n + self.gamma * x[2])
-                c = x[2] - f(t_n1, p_n) #,[x1])
+                p_n1 = p_n + h * v_n + 1./2. * h**2. * ((((1.-2.*self.beta)*a_n )) + 2*self.beta*x[4:6])
+                # a_n1 = self.problem.rhs_given(t_n1, p_n1)
+                # v_n1 = v_n + h * ((1 - self.gamma)*a_n + self.gamma * a_n1)
+                a = x[0:2] - p_n - h*v_n - 1./2.*h**2.*(((1.-2.*self.beta)*a_n ) + 2*self.beta*x[4:6])
+                b = x[2:4] - v_n - h*((1 - self.gamma)*a_n + self.gamma * x[4:6])
+                c = x[4:6] - f(t_n1, p_n1) #,[x1])
         return np.hstack((a, b, c))
       
       guess = np.array([p_n, v_n, a_n])
