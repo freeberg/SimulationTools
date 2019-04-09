@@ -103,27 +103,28 @@ class newmark(Explicit_ODE):
       p_n = Y
       v_n = V
       a_n = A
-       
+      
+      def eq_syst(x):
+        t_n1 = t_n + h
+        f=self.problem.rhs_given
+        
+        if (self.HHT):
+                gamma = (1-2*self.alpha) / 2
+                beta = (1 - self.alpha)**2 / 4
+                a = x[0] - p_n - h*v_n - 1/2*h**2 * ((1 - 2*beta) * a_n + 2*beta * x[2])
+                b = x[1] - v_n - h*((1 - gamma)*a_n + gamma * x[2])
+                c = x[2] - (1 + self.alpha) * f(t_n1, x[0]) + self.alpha * f(t_n, p_n)
+        else:
+                a = x[0] - p_n - h*v_n - 1./2.*h**2.*(((1.-2.*self.beta)*a_n ) + 2*self.beta*x[2])
+                b = x[1] - v_n - h*((1 - self.gamma)*a_n + self.gamma * x[2])
+                c = x[2] - f(t_n1, p_n) #,[x1])
+        return np.hstack((a, b, c))
+      
       guess = np.array([p_n, v_n, a_n])
-      arguments = (t_n, p_n, v_n, a_n, h)
-      p_n1, v_n1, a_n1 = spo.fsolve(self.eq_syst, guess, args=arguments, xtol=self.tol)
-          
+      x = spo.fsolve(eq_syst, guess)
+      p_n1 = x[0:4]
+      v_n1 = x[4:8]
+      a_n1 = x[8:]
       return t_n1,p_n1,v_n1,a_n1
 
-  def eq_syst(self, x, *data):
-    t_n, p_n, v_n, a_n, h = data
-    t_n1 = t_n + h
-    f=self.problem.rhs_given
-    
-    
-    if (self.HHT):
-            gamma = (1-2*self.alpha) / 2
-            beta = (1 - self.alpha)**2 / 4
-            a = x[0] - p_n - h*v_n - 1/2*h**2 * ((1 - 2*beta) * a_n + 2*beta * x[2])
-            b = x[1] - v_n - h*((1 - gamma)*a_n + gamma * x[2])
-            c = x[2] - (1 + self.alpha) * f(t_n1, x[0]) + self.alpha * f(t_n, p_n)
-    else:
-            a = x[0] - p_n - h*v_n - 1./2.*h**2.*(((1.-2.*self.beta)*a_n ) + 2*self.beta*x[2])
-            b = x[1] - v_n - h*((1 - self.gamma)*a_n + self.gamma * x[2])
-            c = x[2] - f(t_n1, x[0]) #,[x1])
-    return np.hstack((a, b, c))
+  
